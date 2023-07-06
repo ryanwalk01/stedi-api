@@ -1,0 +1,88 @@
+#© 2021 Sean Murdock
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prod-stedi-ryan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prod-stedi-ryan
+  template:
+    metadata:
+      labels:
+        app: prod-stedi-ryan
+    spec:
+      containers:
+        - name: prod-stedi-ryan
+          image: gcr.io/cubs-consulting/stedi #NEEDS TO CHANGE TO NEW ARTIFACT REGISTRY (NOT THERE YET)
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets-ryan
+                  key: REDIS_PASS
+            - name: REDIS_HOST
+              value: "redis-stedi-ryan"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_DB
+              value: "0"
+            - name: KAFKA_BROKER
+              value: "localhost:9092"
+          ports:
+            - containerPort: 443
+          resources:
+            limits:
+              cpu: ".5"
+              memory: "500Mi"
+            requests:
+              cpu: ".25"
+              memory: "250Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4567
+            initialDelaySeconds: 3
+            periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prod-stedi-ryan-nodeport
+spec:
+  selector:
+    app: prod-stedi-ryan
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 4567
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prod-stedi-ryan-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: prod-stedi-ryan-public #IP NOT CREATED YET NEED TO CREATE BEFORE APPLYING YAML
+    networking.gke.io/managed-certificates: prod-stedi-ryan-certificate
+    # kubernetes.io/ingress.allow-http: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prod-stedi-ryan-nodeport #NEEDS TO MATCH LINE 53
+            port:
+              number: 80
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: prod-stedi-ryan-certificate #NEEDS TO MATCH LINE 68
+spec:
+  domains:
+    - ryan.cit262.com # THIS DNS RECORD HAS NOT BEEN CREATED YET BEFORE WE APPLY THE YAML
