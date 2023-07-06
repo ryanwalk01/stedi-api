@@ -31,7 +31,7 @@ spec:
 # The name of the container is specified below      
         - name: dev-stedi-ryan
 # The image is a prebuilt file containing the operating system        
-          image: gcr.io/cubs-consulting/dev-stedi-ryan:latest #NEEDS TO CHANGE TO NEW ARTIFACT REGISTRY (NOT THERE YET)
+          image: us-docker.pkg.dev/group3-iam-project/ryan-api/stedi-api:latest #NEEDS TO CHANGE TO NEW ARTIFACT REGISTRY (NOT THERE YET)
           env:
             - name: REDIS_PASSWORD
               valueFrom:
@@ -46,18 +46,11 @@ spec:
               value: "0"
             - name: KAFKA_BROKER
               value: "localhost:9092"
-            - name: TWILIO_ACCOUNT_SID
-              valueFrom:
-                secretKeyRef:
-                  name: twilio-dev
-                  key: twilio_account_sid
             - name: TWILIO_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: twilio-dev
+                  name: ryan-twilio-dev
                   key: twilio_token
-            - name: TWILIO_PHONE
-              value: "+17146778438"
 # The ports is a list of tcp ports the pod listens on
           ports:
 # ContainerPort is a specific port the pod listens on
